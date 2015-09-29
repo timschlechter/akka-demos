@@ -9,7 +9,7 @@ namespace AkkaBank
 
         public BankAccountActor()
         {
-            Become(Opened);
+            Receive<Open>(msg => Become(Opened));
         }
 
         private void Opened()

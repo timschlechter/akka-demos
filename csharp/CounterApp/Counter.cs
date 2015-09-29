@@ -11,9 +11,19 @@ namespace CounterApp
 
         private void Behaviour(int n)
         {
-            Receive<Get>(get => Sender.Tell(n));
-            Receive<Increment>(increment => BecomeStacked(() => Behaviour(n + 1)));
-            Receive<Decrement>(increment => UnbecomeStacked());
+            Receive<Get>(get =>
+            {
+                Sender.Tell(n);
+            });
+
+            Receive<Increment>(incr => {
+                BecomeStacked(() => Behaviour(n + 1));
+            });
+
+            Receive<Decrement>(decr =>
+            {
+                UnbecomeStacked();
+            });
         }
     }
 

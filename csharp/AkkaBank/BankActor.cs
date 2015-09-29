@@ -11,7 +11,12 @@ namespace AkkaBank
         {
             Receive<Open>(msg =>
             {
-                accounts.Add(msg.AccountId, Context.ActorOf<BankAccountActor>());
+                if (!accounts.ContainsKey(msg.AccountId))
+                {
+                    accounts.Add(msg.AccountId, Context.ActorOf<BankAccountActor>());
+                }
+
+                accounts[msg.AccountId].Tell(msg);
             });
 
             Receive<Transfer>(msg =>
@@ -20,7 +25,10 @@ namespace AkkaBank
                 accounts[msg.ToId].Tell(new Deposit {Amount = msg.Amount});
             });
 
-            Receive<BankMessage>(msg => accounts[msg.AccountId].Forward(msg));
+            Receive<Deposit>(msg => accounts[msg.AccountId].Forward(msg));
+            Receive<Withdrawal>(msg => accounts[msg.AccountId].Forward(msg));
+            Receive<GetBalance>(msg => accounts[msg.AccountId].Forward(msg));
+            Receive<Close>(msg => accounts[msg.AccountId].Forward(msg));
         }
     }
 }

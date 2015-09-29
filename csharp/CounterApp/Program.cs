@@ -15,10 +15,10 @@ namespace CounterApp
             counter.Tell(new Decrement());
 
             counter.Tell(new Get());
-
+            
             //counter.Ask<int>(new Get()).ContinueWith(t => Console.WriteLine(t.Result));
-
             Console.ReadKey();
+            system.Shutdown();
         }
     }
 }
