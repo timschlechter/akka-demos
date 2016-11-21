@@ -4,38 +4,17 @@ namespace CounterApp
 {
     public class Counter : ReceiveActor
     {
+        private int _count;
+
         public Counter()
         {
-            Become(() => Behaviour(0));
+            Receive<Increment>(msg => _count += 1);
+            Receive<Increment>(msg => _count -= 1);
+            Receive<Decrement>(msg => Sender.Tell(_count));
         }
+    }   
 
-        private void Behaviour(int n)
-        {
-            Receive<Get>(get =>
-            {
-                Sender.Tell(n);
-            });
-
-            Receive<Increment>(incr => {
-                BecomeStacked(() => Behaviour(n + 1));
-            });
-
-            Receive<Decrement>(decr =>
-            {
-                UnbecomeStacked();
-            });
-        }
-    }
-
-    public class Increment
-    {
-    }
-
-    public class Decrement
-    {
-    }
-
-    public class Get
-    {
-    }
+    public class Increment {}
+    public class Decrement {}
+    public class Get {}
 }

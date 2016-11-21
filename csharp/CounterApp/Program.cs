@@ -18,7 +18,7 @@ namespace CounterApp
             
             //counter.Ask<int>(new Get()).ContinueWith(t => Console.WriteLine(t.Result));
             Console.ReadKey();
-            system.Shutdown();
+            system.Terminate();
         }
     }
 }
