@@ -1,24 +1,19 @@
-using System;
 using System.Linq;
-using System.Threading.Tasks;
 using Akka.Actor;
 using Akka.Util.Internal;
 using HtmlAgilityPack;
-using RestSharp;
 
 namespace Webcrawler.Actors {
     public class Getter : ReceiveActor {
         public Getter(string url, int depth) {
-            //GetContentAsync(url).PipeTo(Self);
-            var self = Self;
-            GetContentAsync(url).ContinueWith(task => {
-                if (task.IsFaulted) {
-                    self.Tell(new Status.Failure(task.Exception));
-                }
-                else {
-                    self.Tell(task.Result);
-                }
-            });
+            #region 1. Use the webclient to GET the body of the given url and send it as a message to self
+
+            var webclient = new Webclient();
+            webclient.GetContentAsync(url).PipeTo(Self);
+
+            #endregion
+
+            #region 2. Receive<string> to process body and extract the links
 
             Receive<string>(body => {
                 try {
@@ -35,46 +30,29 @@ namespace Webcrawler.Actors {
                 }
             });
 
-            Receive<Abort>(msg => Stop());
             Receive<Status.Failure>(msg => Stop());
+
+            #endregion
+
+            #region 4. Abort
+
+            Receive<Abort>(msg => Stop());
+
+            #endregion
         }
+
+        #region 3. Stop()
 
         private void Stop() {
             Context.Parent.Tell(new Done());
             Context.Stop(Self);
         }
 
-        private Task<string> GetContentAsync(string url) {
-            var tcs = new TaskCompletionSource<string>();
-
-            try {
-                var client = new RestClient(url);
-                client.GetAsync(new RestRequest(), (response, handle) => {
-                    if ((int) response.StatusCode >= 400) {
-                        tcs.SetException(response.ErrorException);
-                    }
-
-                    tcs.SetResult(response.Content);
-                });
-            }
-            catch (Exception ex) {
-                tcs.SetException(ex);
-            }
-
-            return tcs.Task;
-        }
-
-        private string GetContent(string url) {
-            var client = new RestClient();
-
-
-            var response = client.Get(new RestRequest(url));
-
-            return response.Content;
-        }
+        #endregion
 
         public class Done {}
 
         public class Abort {}
     }
+
 }

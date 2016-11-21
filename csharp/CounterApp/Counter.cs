@@ -9,8 +9,8 @@ namespace CounterApp
         public Counter()
         {
             Receive<Increment>(msg => _count += 1);
-            Receive<Increment>(msg => _count -= 1);
-            Receive<Decrement>(msg => Sender.Tell(_count));
+            Receive<Decrement>(msg => _count -= 1);
+            Receive<Get>(msg => Sender.Tell(_count));
         }
     }   
 

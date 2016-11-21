@@ -1,24 +1,24 @@
 ﻿using System;
 using Akka.Actor;
+using Akka.Configuration;
 
-namespace CounterApp
-{
-    internal class Program
-    {
-        private static void Main(string[] args)
-        {
-            var system = ActorSystem.Create("counterSystem");
-            var counter = system.ActorOf<Counter>();
+namespace CounterApp {
+    internal class Program {
+        private static void Main(string[] args) {
+            var config = ConfigurationFactory.ParseString(@"akka { suppress-json-serializer-warning = true }");
 
-            counter.Tell(new Increment());
-            counter.Tell(new Increment());
-            counter.Tell(new Decrement());
+            using (var system = ActorSystem.Create("counterSystem", config)) {
+                var counter = system.ActorOf<Counter>("counter");
 
-            counter.Tell(new Get());
-            
-            //counter.Ask<int>(new Get()).ContinueWith(t => Console.WriteLine(t.Result));
-            Console.ReadKey();
-            system.Terminate();
+                counter.Tell(new Increment());
+                counter.Tell(new Increment());
+                counter.Tell(new Decrement());
+
+                counter.Ask(new Decrement());
+
+                Console.WriteLine("Press any key...");
+                Console.ReadKey();
+            }
         }
     }
 }

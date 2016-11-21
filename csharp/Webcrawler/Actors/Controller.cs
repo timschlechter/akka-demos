@@ -10,47 +10,71 @@ namespace Webcrawler.Actors {
         private readonly IList<IActorRef> _children = new List<IActorRef>();
 
         public Controller() {
-            //Context.SetReceiveTimeout(TimeSpan.FromSeconds(10));
-            //Context.System.Scheduler.ScheduleOnce(TimeSpan.FromSeconds(10), () => { _children.ForEach(child => child.Tell(new Getter.Abort())); });
-            //Context.System.Scheduler.ScheduleTellOnce(TimeSpan.FromSeconds(10), Self, new Timeout(), Self);
 
+            #region 1. Receive<Check>
 
             Receive<Check>(msg => {
                 var depth = msg.Depth;
                 var url = msg.Url;
 
-                if (!_cache.Contains(url)) {
-                    Console.WriteLine($"{depth} checking {url}");
-                    _cache.Add(url);
-                    if (depth > 0) {
-                        _children.Add(Context.ActorOf(Props.Create<Getter>(url, depth - 1)));
-                    }
+                if (_cache.Contains(url)) {
+                    return;
+                }
+
+                Console.WriteLine($"Depth {depth} - checking {url}");
+                _cache.Add(url);
+                if (depth > 0) {
+                    _children.Add(Context.ActorOf(Props.Create<Getter>(url, depth - 1)));
                 }
             });
+
+            #endregion
+
+            #region 2. Receive<Getter.Done>
 
             Receive<Getter.Done>(msg => {
                 _children.Remove(Sender);
-                    
+
                 if (!_children.Any()) {
-                    Context.Parent.Tell(new Result {Links = _cache.ToArray()});
+                    Context.Parent.Tell(new Result { Links = _cache.ToArray() });
                 }
             });
 
-            Receive<ReceiveTimeout>(msg => { _children.ForEach(child => child.Tell(new Getter.Abort())); });
+            #endregion
 
-            Receive<Timeout>(msg => { _children.ForEach(child => child.Tell(new Getter.Abort())); });
+            #region 3. Receive timeout
+
+            Context.SetReceiveTimeout(TimeSpan.FromSeconds(10));
+
+            Receive<ReceiveTimeout>(msg => {
+                _children.ForEach(child => child.Tell(new Getter.Abort()));
+            });
+
+            #endregion
+
+            #region 4. Overall timeout
+
+            //Context.System.Scheduler.ScheduleOnce(
+            //    TimeSpan.FromSeconds(10), 
+            //    () => { _children.ForEach(child => child.Tell(new Getter.Abort())); });
+
+            //Context.System.Scheduler.ScheduleTellOnce(TimeSpan.FromSeconds(10), Self, new Timeout(), Self);
+
+            //Receive<Timeout>(msg => { _children.ForEach(child => child.Tell(new Getter.Abort())); });
+
+            #endregion
         }
 
+        public class Check
+        {
+            public string Url { get; set; }
+            public int Depth { get; set; }
+        }
 
         public class Result {
             public string[] Links { get; set; }
         }
 
         private class Timeout {}
-
-        public class Check {
-            public string Url { get; set; }
-            public int Depth { get; set; }
-        }
     }
 }
