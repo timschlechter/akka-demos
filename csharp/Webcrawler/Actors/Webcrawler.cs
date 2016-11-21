@@ -15,7 +15,9 @@ namespace Webcrawler.Actors {
         private void Waiting() {
             #region Upon Get start a traversal and become Running
 
-            Receive<Get>(msg => { Become(() => RunNext(new[] {new Job {Client = Sender, Url = msg.Url}})); });
+            Receive<Get>(msg => {
+                Become(() => RunNext(new Job {Client = Sender, Url = msg.Url}));
+            });
 
             #endregion
         }
@@ -39,21 +41,30 @@ namespace Webcrawler.Actors {
             #endregion
         }
 
-        #region RunNext and EnqueueJob helper method
-
-        private class Job {
-            public IActorRef Client { get; set; }
+        public class Get {
             public string Url { get; set; }
         }
 
-        private void RunNext(Job[] queue) {
+        public class Result {
+            public string Url { get; set; }
+            public string[] Links { get; set; }
+        }
+
+        #region RunNext and EnqueueJob helper method
+
+        private class Job {
+            public string Url { get; set; }
+            public IActorRef Client { get; set; }
+        }
+
+        private void RunNext(params Job[] queue) {
             if (!queue.Any()) {
                 Waiting();
             }
             else {
                 _reqNr += 1;
                 var controller = Context.ActorOf(Props.Create<Controller>(), $"c{_reqNr}");
-                controller.Tell(new Controller.Check {Url = queue.First().Url, Depth = 1});
+                controller.Tell(new Controller.Check {Url = queue.First().Url, Depth = 2});
                 Running(queue);
             }
         }
@@ -69,14 +80,5 @@ namespace Webcrawler.Actors {
         }
 
         #endregion
-        
-        public class Get {
-            public string Url { get; set; }
-        }
-
-        public class Result {
-            public string Url { get; set; }
-            public string[] Links { get; set; }
-        }
     }
 }

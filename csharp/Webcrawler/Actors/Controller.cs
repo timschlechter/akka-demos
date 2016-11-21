@@ -20,10 +20,9 @@ namespace Webcrawler.Actors {
                 if (_cache.Contains(url)) {
                     return;
                 }
-
-                Console.WriteLine($"Depth {depth} - checking {url}");
                 _cache.Add(url);
                 if (depth > 0) {
+                    Console.WriteLine($"Depth {depth} - checking {url}");
                     _children.Add(Context.ActorOf(Props.Create<Getter>(url, depth - 1)));
                 }
             });
@@ -58,9 +57,9 @@ namespace Webcrawler.Actors {
             //    TimeSpan.FromSeconds(10), 
             //    () => { _children.ForEach(child => child.Tell(new Getter.Abort())); });
 
-            //Context.System.Scheduler.ScheduleTellOnce(TimeSpan.FromSeconds(10), Self, new Timeout(), Self);
-
             //Receive<Timeout>(msg => { _children.ForEach(child => child.Tell(new Getter.Abort())); });
+
+            //Context.System.Scheduler.ScheduleTellOnce(TimeSpan.FromSeconds(10), Self, new Timeout(), Self);
 
             #endregion
         }

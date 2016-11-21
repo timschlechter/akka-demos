@@ -14,6 +14,7 @@ namespace Webcrawler {
 
                 crawler.Ask<object>(new Actors.Webcrawler.Get {Url = "http://www.google.nl/"}).ContinueWith(HandleResult);
 
+
                 Console.ReadKey();
             }
         }
